@@ -20,9 +20,9 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import {Agenda, Calendar} from 'react-native-calendars';
+import {Calendar} from 'react-native-calendars';
 
-import {Header, InputModal, ShowEvents} from './components';
+import {Header} from './components';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -30,7 +30,8 @@ const App = () => {
   const D = new Date()
   const [selectedDate, setSelectedDate] = useState({dateString: D.toISOString().split('T')[0], day: D.getDate(), month: D.getMonth()});
   const [events, setEvents] = useState({});
-  const [showModal, setShowModal] = useState(false);
+  const [newEve, setNewEve] = useState('')
+  const [markedDates, setMarkedDates] = useState({})
 
 
   useEffect(() => {
@@ -44,16 +45,21 @@ const App = () => {
   };
 
   const setNewEvent = () => {
-    const old = events[selectedDate] || []
+    const old = events[selectedDate.dateString] || []
+    console.log(old)
     const d = new Date()
     const is_pm = d.getHours() > 12
-    const {day, month} = selectedDate
+    const day = new Date().getDate()
+    const month = new Date().getMonth()
     const n_event = {
       ...selectedDate,
     }
-    n_event.str = `${MONTHS[month]} ${day}, ${is_pm ? d.getHours() - 12 : d.getHours()} : ${d.getMinutes()} ${is_pm ? 'pm' : 'am'}`
+    n_event.str = `${MONTHS[month]} ${day}, ${is_pm ? d.getHours() - 12 : d.getHours()}:${d.getMinutes()} ${is_pm ? 'pm' : 'am'}`
+    n_event.event = newEve
     old.push(n_event)
-    setEvents({...events, [selectedDate]: old});
+    setEvents({...events, [selectedDate.dateString]: old});
+    setNewEve('')
+    setMarkedDates({...markedDates, [selectedDate.dateString]: {selected: true, selectedColor: 'blue'}})
   };
 
   const vacation = {key: 'vacation', color: 'red', selectedDotColor: 'blue'};
@@ -74,6 +80,7 @@ const App = () => {
           markingType={'multi-dot'}
           markedDates={{
             [selectedDate.dateString]: {selected: true, selectedColor: '#70d7c7'},
+            ...markedDates
           }}
         />
 
@@ -86,27 +93,25 @@ const App = () => {
         <Text style={styles.events}>Events</Text>
 
 
-        {/* <ScrollView contentContainerStyle={styles.eventsScroll}>
-          {events?.[selectedDate] ? (
-            [...events[selectedDate]].map((eve, i) => {
-              console.log(events, events[selectedDate]);
+        <ScrollView contentContainerStyle={styles.eventsScroll}>
+          {events?.[selectedDate.dateString] ? (
+            [...events[selectedDate.dateString]].map((eve, i) => {
+              console.log(events, events[selectedDate.dateString]);
               return (
                 <View key={i}>
                   <Text style={styles.no}>
-                    {eve}
+                    {eve.event}
                   </Text>
-                  <Pressable><Text>✓</Text></Pressable>
-                  <Pressable><Text> 🗑</Text></Pressable>
                 </View>
               );
             })
           ) : (
-            <Text style={styles.no}>No events </Text>
+            <Text style={styles.no_eve}>No events </Text>
           )}
-        </ScrollView> */}
+        </ScrollView>
       </ScrollView>
       <View style={styles.addEventView}>
-        <TextInput placeholder="Add a new one" style={styles.txtInp} />
+        <TextInput placeholder="Add a new one" value={newEve} onChange={e => setNewEve(e.nativeEvent.text)}  style={styles.txtInp} />
         <Pressable onPress={setNewEvent}>
           <Text style={styles.addBtn}>Add</Text>
         </Pressable>
@@ -123,6 +128,20 @@ const styles = StyleSheet.create({
   },
   no: {
     color: 'black',
+    fontSize: 18,
+    padding: 10,
+    paddingLeft: 20,
+    backgroundColor: 'lightgreen',
+    margin: 10
+  },
+  no_eve:{
+    fontSize: 18,
+    padding: 10,
+    paddingLeft: 20,
+    backgroundColor: 'orangered',
+    margin: 10,
+    // color: 'black'
+
   },
   eventsScroll: {
     margin: 'auto',
@@ -134,8 +153,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   txtInp: {
-    color: 'black',
-    // borderWidth: 2,
+    color: 'white',
     width: '86%',
     backgroundColor: '#333',
     fontSize: 15,
